@@ -1,0 +1,55 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.5
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.0.2'
+        classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.7.1'
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'http://repo.md-5.net/content/groups/public/' }
+}
+
+dependencies {
+    compile 'pw.ian:albkit:0.1.0-SNAPSHOT'
+    compile 'org.bukkit:bukkit:1.7.9-R0.3-SNAPSHOT'
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+processResources {
+    from('src/main/resources') {
+        include '*'
+        filter { String line ->
+            line.replace('$version', 'v' + cmd('git describe --always --dirty=-dirty'))
+        }
+    }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+shadowJar {
+    archiveName = jar.archiveName
+    dependencies {
+        include(dependency('pw.ian:albkit:0.1.0-SNAPSHOT'))
+    }
+    relocate 'pw.ian.albkit', 'pw.ollie.zombies.albkit'
+}
+
+shadowJar.dependsOn build
+uploadArchives.dependsOn shadowJar
+
+group = 'pw.ollie'
+archivesBaseName = 'zombies'
+project.version = '0.1.0-SNAPSHOT'
+
+defaultTasks 'clean', 'build', 'shadowJar'
